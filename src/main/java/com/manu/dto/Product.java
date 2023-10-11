@@ -5,10 +5,21 @@ public class Product {
     String productName;
     Integer availableQuantity;
     Double price;
-    public Product( String productName, Integer availableQuantity, Double price) {
+
+    public String getProductQr() {
+        return productQr;
+    }
+
+    public void setProductQr(String productQr) {
+        this.productQr = productQr;
+    }
+
+    String productQr;
+    public Product( String productName, Integer availableQuantity, Double price,String productQr) {
         this.productName = productName;
         this.availableQuantity = availableQuantity;
         this.price = price;
+        this.productQr=productQr;
     }
 
     public Integer getProductId() {
