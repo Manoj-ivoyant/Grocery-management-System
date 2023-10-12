@@ -2,33 +2,35 @@ package com.manu.dao;
 
 import com.manu.config.ConnectionGenerator;
 import com.manu.dto.Product;
+import com.manu.dto.PurchaseDto;
 import com.manu.exception.ResourceNotFound;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 
-public class ProductDao {
 
+public class ProductDao {
+    private static final Logger logger = LoggerFactory.getLogger(ProductDao.class);
 
     public void createTable() {
+        Connection connection = ConnectionGenerator.connection;
 
-        Connection connection = ConnectionGenerator.createConnection();
         try {
-            String query = "CREATE TABLE product ("
-                    + "product_id INT AUTO_INCREMENT PRIMARY KEY, "
-                    + "product_name VARCHAR(40) NOT NULL UNIQUE, "
-                    + "available_quantity INT, "
-                    + "price DOUBLE"
-                    + ")";
+            String query = "CREATE TABLE product (" + "product_id INT AUTO_INCREMENT PRIMARY KEY, " + "product_name VARCHAR(40) NOT NULL UNIQUE, " + "available_quantity INT, " + "price DOUBLE, " + "product_qr VARCHAR(10) NOT NULL UNIQUE " + ")";
+            String query2 = "CREATE TABLE billing (" + "bill_id INT AUTO_INCREMENT PRIMARY KEY," + "total_price DOUBLE NOT NULL," + "product_qr VARCHAR(10) NOT NULL," + "purchased_quantity INT NOT NULL," + "purchasedTime TIMESTAMP NOT NULL" + ")";
+
             Statement statement = connection.createStatement();
             statement.execute(query);
-            System.out.println("Table created sucessfully");
-            connection.close();
+            statement.execute(query2);
+            logger.info("Table created successfully");
             statement.close();
 
 
         } catch (SQLSyntaxErrorException e) {
-            System.out.println("table already created");
+            logger.error("table already created");
         } catch (SQLException e) {
+            logger.error(e.getLocalizedMessage());
             throw new RuntimeException(e);
         }
 
@@ -36,125 +38,140 @@ public class ProductDao {
     }
 
     public void insertTable(Product product) {
-        Connection connection = ConnectionGenerator.createConnection();
+        Connection connection = ConnectionGenerator.connection;
+
         try {
-            String query = "INSERT INTO product (product_name, available_quantity, price) VALUES (?, ?, ?)";
+            String query = "INSERT INTO product (product_name, available_quantity, price,product_qr) VALUES (?, ?, ?,?)";
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setString(1, product.getProductName());
             statement.setInt(2, product.getAvailableQuantity());
             statement.setDouble(3, product.getPrice());
+            statement.setString(4, product.getProductQr());
             int result = statement.executeUpdate();
             if (result == 1) {
-                System.out.println("product inserted sucessfully");
+                //System.out.println("product inserted sucessfully");
+                logger.info("product inserted successfully");
             }
             statement.close();
-            connection.close();
-
-
         } catch (SQLIntegrityConstraintViolationException e) {
-            System.out.println("product already exist");
+            //System.out.println("product already exist");
+            logger.error("product already exist");
         } catch (SQLException e) {
+            logger.warn(e.getLocalizedMessage());
             throw new RuntimeException(e);
         }
+
     }
 
     public void getByName(String productName) {
+        Connection connection = ConnectionGenerator.connection;
 
-        Connection connection = ConnectionGenerator.createConnection();
-        String query = "select *from product where product_name=?";
+        String query = "select * from product where product_name=?";
         try {
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setString(1, productName);
             boolean flag = false;
 
             ResultSet resultSet = statement.executeQuery();
+
+            // Print column headers in a table format
+            System.out.println("+------------+--------------------------+----------------------+----------+------------------------+");
+            System.out.println("| Product ID | Product Name             | Available Quantity   | Price    | Product QR             |");
+            System.out.println("+------------+--------------------------+----------------------+----------+------------------------+");
+
             while (resultSet.next()) {
                 flag = true;
-                // Retrieve and process the data from the result set
                 int productId = resultSet.getInt("product_id");
-                String productname = resultSet.getString("product_name");
+                String product_name = resultSet.getString("product_name");
                 int availableQuantity = resultSet.getInt("available_quantity");
                 double price = resultSet.getDouble("price");
+                String productQr = resultSet.getString("product_qr");
 
-                // Process the retrieved data as needed
-                System.out.println("Product ID: " + productId);
-                System.out.println("Product Name: " + productname);
-                System.out.println("Available Quantity: " + availableQuantity);
-                System.out.println("Price: " + price);
+                // Format and print each record in a table format
+                System.out.printf("| %-10d | %-24s | %-20d | %-8.2f | %-22s |%n", productId, product_name, availableQuantity, price, productQr);
             }
-            connection.close();
+
+            // Print a closing line for the table
+            System.out.println("+------------+--------------------------+----------------------+----------+------------------------+");
+
             statement.close();
-            if (!flag) {
-                throw new ResourceNotFound("product:" + productName + " not found");
-            }
 
+            if (!flag) {
+                logger.warn("throws resource not found exception");
+                throw new ResourceNotFound("Product: " + productName + " not found");
+            }
         } catch (ResourceNotFound e) {
-            System.out.println(e.getLocalizedMessage());
+            logger.error(e.getLocalizedMessage());
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-
     }
 
     public void getAll() {
         Connection connection = ConnectionGenerator.createConnection();
-        String query = "select *from product";
+        String query = "select * from product";
         try {
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery(query);
             boolean flag = false;
+
+            // Print column headers in a table format
+            System.out.println("+------------+--------------------------+----------------------+----------+------------------------+");
+            System.out.println("| Product ID | Product Name             | Available Quantity   | Price    | Product QR             |");
+            System.out.println("+------------+--------------------------+----------------------+----------+------------------------+");
+
             while (resultSet.next()) {
                 flag = true;
-                // Retrieve and process the data from the result set
                 int productId = resultSet.getInt("product_id");
-                String productname = resultSet.getString("product_name");
+                String productName = resultSet.getString("product_name");
                 int availableQuantity = resultSet.getInt("available_quantity");
                 double price = resultSet.getDouble("price");
+                String productQr = resultSet.getString("product_qr");
 
-                // Process the retrieved data as needed
-                System.out.println("Product ID: " + productId);
-                System.out.println("Product Name: " + productname);
-                System.out.println("Available Quantity: " + availableQuantity);
-                System.out.println("Price: " + price);
-
+                // Format and print each record in a table format
+                System.out.printf("| %-10d | %-24s | %-20d | %-8.2f | %-22s |%n", productId, productName, availableQuantity, price, productQr);
             }
-            connection.close();
-            statement.close();
+
+            // Print a closing line for the table
+            System.out.println("+------------+--------------------------+----------------------+----------+------------------------+");
+
             if (!flag) {
-                throw new ResourceNotFound("product not found(empty table)");
+                throw new ResourceNotFound("Product not found (empty table)");
             }
 
-
+            statement.close();
         } catch (ResourceNotFound e) {
-            System.out.println(e.getLocalizedMessage());
+            logger.error(e.getLocalizedMessage());
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-
     }
 
+
     public void deleteByName(String productName) {
-        Connection connection = ConnectionGenerator.createConnection();
+        Connection connection = ConnectionGenerator.connection;
+
         String query = "delete from product where product_name=?";
         try {
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setString(1, productName);
             int res = statement.executeUpdate();
             if (res == 1) {
-                System.out.println("product with productName:" + productName + " deleted successfully");
+                logger.info("product with productName:" + productName + " deleted successfully");
             } else {
                 throw new ResourceNotFound("Product " + productName + " not found");
             }
-            connection.close();
             statement.close();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
 
+
     }
 
     public void updateQuantity(String productName, Integer quantity) {
-        Connection connection = ConnectionGenerator.createConnection();
+        Connection connection = ConnectionGenerator.connection;
+
         String query = "update product set available_quantity=? where product_name=?";
         try {
             PreparedStatement statement = connection.prepareStatement(query);
@@ -162,11 +179,10 @@ public class ProductDao {
             statement.setString(2, productName);
             int res = statement.executeUpdate();
             if (res == 1) {
-                System.out.println("product updated successfully");
+                logger.info("product updated successfully");
             } else {
                 throw new ResourceNotFound("Product " + productName + " not found");
             }
-            connection.close();
             statement.close();
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -176,7 +192,8 @@ public class ProductDao {
     }
 
     public void updatePrice(String productName, Double price) {
-        Connection connection = ConnectionGenerator.createConnection();
+        Connection connection = ConnectionGenerator.connection;
+
         String query = "update product set price=? where product_name=?";
         try {
             PreparedStatement statement = connection.prepareStatement(query);
@@ -184,54 +201,154 @@ public class ProductDao {
             statement.setString(2, productName);
             int res = statement.executeUpdate();
             if (res == 1) {
-                System.out.println("product updated successfully");
+                logger.info("product updated successfully");
             } else {
                 throw new ResourceNotFound("Product " + productName + " not found");
             }
-            connection.close();
             statement.close();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-
-
     }
 
     public void getByNameLike(String key) {
-        Connection connection = ConnectionGenerator.createConnection();
-        String query = "select *from product where product_name like ?";
+        Connection connection = ConnectionGenerator.connection;
+        String query = "select * from product where product_name like ?";
         try {
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setString(1, "%" + key + "%");
             boolean flag = false;
-
             ResultSet resultSet = statement.executeQuery();
+
+            // Print column headers in a table format
+            System.out.println("+------------+--------------------------+----------------------+----------+------------------------+");
+            System.out.println("| Product ID | Product Name             | Available Quantity   | Price    | Product QR             |");
+            System.out.println("+------------+--------------------------+----------------------+----------+------------------------+");
+
             while (resultSet.next()) {
                 flag = true;
-                // Retrieve and process the data from the result set
                 int productId = resultSet.getInt("product_id");
-                String productname = resultSet.getString("product_name");
+                String productName = resultSet.getString("product_name");
                 int availableQuantity = resultSet.getInt("available_quantity");
                 double price = resultSet.getDouble("price");
+                String productQr = resultSet.getString("product_qr");
 
-                // Process the retrieved data as needed
-                System.out.println("Product ID: " + productId);
-                System.out.println("Product Name: " + productname);
-                System.out.println("Available Quantity: " + availableQuantity);
-                System.out.println("Price: " + price);
-
-
+                // Format and print each record in a table format
+                System.out.printf("| %-10d | %-24s | %-20d | %-8.2f | %-22s |%n", productId, productName, availableQuantity, price, productQr);
             }
+
+            // Print a closing line for the table
+            System.out.println("+------------+--------------------------+----------------------+----------+------------------------+");
+
             if (!flag) {
-                throw new ResourceNotFound("product for specified key match not found");
+                throw new ResourceNotFound("Product for the specified key match not found");
             }
-            connection.close();
+
             statement.close();
         } catch (ResourceNotFound e) {
-            System.out.println(e.getLocalizedMessage());
+            logger.error(e.getLocalizedMessage());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    public double purchaseProduct(PurchaseDto purchaseDto) {
+        Connection connection = ConnectionGenerator.connection;
+        String query = "select * from product where product_qr=?";
+        double invoicePrice = 0.0;
+
+        try {
+            boolean flag = false;
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, purchaseDto.getProductQr());
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                flag = true;
+                double price = resultSet.getDouble("price");
+                double totalPrice = purchaseDto.getQuantity() * price;
+                int availableQuantity = resultSet.getInt("available_quantity");
+
+                if (availableQuantity >= purchaseDto.getQuantity()) {
+                    availableQuantity -= purchaseDto.getQuantity();
+                    String productName = resultSet.getString("product_name");
+                    Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+
+                    String insertQuery = "INSERT INTO billing (total_price, product_qr, purchased_quantity, purchasedTime) VALUES (?, ?, ?, ?)";
+                    PreparedStatement insertStatement = connection.prepareStatement(insertQuery);
+                    insertStatement.setDouble(1, totalPrice);
+                    insertStatement.setString(2, purchaseDto.getProductQr());
+                    insertStatement.setInt(3, purchaseDto.getQuantity());
+                    insertStatement.setTimestamp(4, timestamp);
+                    int insertResult = insertStatement.executeUpdate();
+
+                    if (insertResult == 1) {
+                        updateQuantity(productName, availableQuantity);
+                        logger.info("Product purchased successfully");
+                        invoicePrice = totalPrice;
+                    }
+                    insertStatement.close();
+                } else {
+                    logger.info("Requested quantity not available");
+                }
+            }
+
+            if (!flag) {
+                throw new ResourceNotFound("Product not found (empty table)");
+            }
+        } catch (ResourceNotFound e) {
+            logger.error(e.getLocalizedMessage());
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
 
+        return invoicePrice;
     }
+
+    public void viewPurchaseHistory() {
+        Connection connection = ConnectionGenerator.connection;
+
+        String query = "select * from billing";
+        try {
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(query);
+            boolean flag = false;
+
+            // Print column headers for the invoice
+            System.out.println("Invoice for this purchase session:");
+            System.out.println("===================================");
+            System.out.printf("%-12s | %-10s | %-8s%n", "Product QR", "Quantity", "Price");
+            System.out.println("===================================");
+
+            double totalInvoicePrice = 0.0;
+
+            while (resultSet.next()) {
+                flag = true;
+                String productQr = resultSet.getString("product_qr");
+                int purchasedQuantity = resultSet.getInt("purchased_quantity");
+                double price = resultSet.getDouble("total_price");
+
+                // Format and print each line of the invoice
+                System.out.printf("%-12s | %-10d | %-8.2f%n", productQr, purchasedQuantity, price);
+                totalInvoicePrice += price;
+            }
+
+            // Print the total invoice price
+            System.out.println("===================================");
+            System.out.printf("Total Invoice Price: %.2f%n", totalInvoicePrice);
+
+            statement.close();
+
+            if (!flag) {
+                throw new ResourceNotFound("Billing table is empty");
+            }
+        } catch (ResourceNotFound e) {
+            logger.error(e.getLocalizedMessage());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }
+
