@@ -5,10 +5,14 @@ import com.manu.dao.ProductDao;
 import com.manu.dto.Product;
 import com.manu.dto.PurchaseDto;
 import com.manu.exception.ResourceNotFound;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Scanner;
 
 public class ProductDriver {
+    private static final Logger logger = LoggerFactory.getLogger(ProductDriver.class);
+
     public static void main(String[] args) {
         ProductDao productDao = new ProductDao();
         boolean flag = true;
@@ -52,105 +56,160 @@ public class ProductDriver {
                     }
                     break;
                 case 3:
-                    productDao.createTable();
+                    if (ConnectionGenerator.connection != null) {
+                        productDao.createTable();
+                    } else {
+                        logger.error("connection closed choose choice 2 to get connection ");
+                    }
                     break;
                 case 4:
-                    sc.nextLine();
-                    System.out.println("Enter product name");
-                    String name = sc.nextLine();
+                    if (ConnectionGenerator.connection != null) {
 
-                    System.out.println("Enter product quantity");
-                    int quantity = Integer.parseInt(sc.nextLine());
+                        sc.nextLine();
+                        System.out.println("Enter product name");
+                        String name = sc.nextLine();
 
-                    System.out.println("Enter product price");
-                    double price = Double.parseDouble(sc.nextLine());
 
-                    System.out.println("Enter product Qr");
-                    String productQr = sc.nextLine();
+                        System.out.println("Enter product quantity");
+                        int quantity = Integer.parseInt(sc.nextLine());
 
-                    Product product = new Product(name, quantity, price, productQr);
-                    productDao.insertTable(product);
+                        System.out.println("Enter product price");
+                        double price = Double.parseDouble(sc.nextLine());
+
+                        System.out.println("Enter product Qr");
+                        String productQr = sc.nextLine();
+
+                        Product product = new Product(name, quantity, price, productQr);
+                        productDao.insertTable(product);
+                    } else {
+                        logger.error("connection closed choose choice 2 to get connection ");
+                    }
                     break;
                 case 5:
-                    sc.nextLine();
-                    System.out.println("enter product name");
-                    String productName = sc.nextLine();
-                    productDao.getByName(productName);
+                    if (ConnectionGenerator.connection != null) {
+                        sc.nextLine();
+                        System.out.println("enter product name");
+                        String productName = sc.nextLine();
+                        productDao.getByName(productName);
+                    } else {
+                        logger.error("connection closed choose choice 2 to get connection ");
+                    }
+
+
                     break;
                 case 6:
-                    productDao.getAll();
+                    if (ConnectionGenerator.connection != null) {
+                        productDao.getAll();
+                    } else {
+                        logger.error("connection closed choose choice 2 to get connection ");
+                    }
+
                     break;
                 case 7:
-                    sc.nextLine();
-                    System.out.println("enter the key(productName) to search");
-                    String key = sc.nextLine();
-                    productDao.getByNameLike(key);
+                    if (ConnectionGenerator.connection != null) {
+                        sc.nextLine();
+                        System.out.println("enter the key(productName) to search");
+                        String key = sc.nextLine();
+                        productDao.getByNameLike(key);
+                    } else {
+                        logger.error("connection closed choose choice 2 to get connection ");
+                    }
+
                     break;
                 case 8:
-                    try {
-                        sc.nextLine();
-                        System.out.println("enter the productname and product quantity to update");
-                        String pro = sc.nextLine();
-                        Integer updateQuantity = sc.nextInt();
-                        productDao.updateQuantity(pro, updateQuantity);
-                    } catch (ResourceNotFound e) {
-                        System.out.println(e.getLocalizedMessage());
+                    if (ConnectionGenerator.connection != null) {
+                        try {
+                            sc.nextLine();
+                            System.out.println("enter the productname and product quantity to update");
+                            String pro = sc.nextLine();
+                            Integer updateQuantity = sc.nextInt();
+                            productDao.updateQuantity(pro, updateQuantity);
+                        } catch (ResourceNotFound e) {
+                            System.out.println(e.getLocalizedMessage());
+                        }
+                    } else {
+                        logger.error("connection closed choose choice 2 to get connection ");
                     }
 
                     break;
                 case 9:
-                    try {
-                        sc.nextLine();
-                        System.out.println("enter the product name and product price to update");
-                        String prod = sc.nextLine();
-                        Double pri = sc.nextDouble();
-                        productDao.updatePrice(prod, pri);
-                    } catch (ResourceNotFound e) {
-                        System.out.println(e.getLocalizedMessage());
+                    if (ConnectionGenerator.connection != null) {
+                        try {
+                            sc.nextLine();
+                            System.out.println("enter the product name and product price to update");
+                            String prod = sc.nextLine();
+                            Double pri = sc.nextDouble();
+                            productDao.updatePrice(prod, pri);
+                        } catch (ResourceNotFound e) {
+                            System.out.println(e.getLocalizedMessage());
+                        }
+                    } else {
+                        logger.error("connection closed choose choice 2 to get connection ");
                     }
 
                     break;
                 case 10:
-                    try {
-                        sc.nextLine();
-                        System.out.println("enter the product name to delete");
-                        String productNaame = sc.nextLine();
-                        productDao.deleteByName(productNaame);
+                    if (ConnectionGenerator.connection != null) {
+                        try {
+                            sc.nextLine();
+                            System.out.println("enter the product name to delete");
+                            String productNaame = sc.nextLine();
+                            productDao.deleteByName(productNaame);
 
-                    } catch (ResourceNotFound e) {
-                        System.out.println(e.getLocalizedMessage());
+                        } catch (ResourceNotFound e) {
+                            System.out.println(e.getLocalizedMessage());
+                        }
+                    } else {
+                        logger.error("connection closed choose choice 2 to get connection ");
                     }
                     break;
                 case 11:
-                    boolean x = true;
-                    do {
+                    if (ConnectionGenerator.connection != null) {
+                        double totalInvoicePrice = 0.0;
+                        boolean continuePurchasing = true;
 
-                        sc.nextLine();
-                        System.out.println("Enter product Qr");
-                        String productqr = sc.nextLine();
+                        while (continuePurchasing) {
+                            sc.nextLine();
+                            System.out.println("Enter product QR");
+                            String productQR = sc.nextLine();
+                            System.out.println("Enter product quantity to purchase");
+                            int purchasingQuantity = Integer.parseInt(sc.nextLine());
 
-                        System.out.println("Enter product quantity to purchase");
-                        int purchasingQuantity = Integer.parseInt(sc.nextLine());
-                        PurchaseDto purchaseDto = new PurchaseDto(productqr, purchasingQuantity);
-                        productDao.purchaseProduct(purchaseDto);
-                        System.out.println("do you wish to purchase?y/n");
-                        String c = sc.nextLine();
-                        if (c.equals("n")) {
-                            x = false;
+                            PurchaseDto purchaseDto = new PurchaseDto(productQR, purchasingQuantity);
+                            double purchasePrice = productDao.purchaseProduct(purchaseDto);
+
+                            totalInvoicePrice += purchasePrice;
+                            //sc.nextLine();
+                            System.out.println("Do you wish to purchase another product? (y/n)");
+                            String c = sc.nextLine();
+
+                            if (c.equalsIgnoreCase("n")) {
+                                continuePurchasing = false;
+                            }
                         }
-                    } while (x);
 
+                        // Provide invoice for the current purchase session
+                        System.out.println("Invoice for this purchase session:");
+                        System.out.println("================================");
+                        System.out.println("Inovice price:" + totalInvoicePrice);
+                        System.out.println("================================");
+                    } else {
+                        logger.error("Connection closed. Choose choice 2 to get a connection.");
+                    }
                     break;
+
 
                 case 12:
-                    productDao.viewPurchaseHistory();
+                    if (ConnectionGenerator.connection != null) {
+                        productDao.viewPurchaseHistory();
+                    } else {
+                        logger.error("connection closed choose choice 2 to get connection ");
+                    }
                     break;
-
                 case 13:
                     if (ConnectionGenerator.connection != null) {
                         ConnectionGenerator.connection = null;
                         System.out.println("Connection closed sucessfully");
-
                     }
                     break;
                 case 14:
@@ -158,10 +217,7 @@ public class ProductDriver {
                     break;
                 default:
                     System.out.println("invalid choice");
-
             }
-
-
         } while (flag);
     }
 }
